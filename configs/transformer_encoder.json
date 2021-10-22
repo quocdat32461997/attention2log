@@ -1,7 +1,7 @@
 {
   "window_size": 10,
   "shuffle": false,
-  "iterations": 50,
+  "epochs": 50,
   "batch_size": 20,
   "lr": 0.01,
   "lr_decay": false,
