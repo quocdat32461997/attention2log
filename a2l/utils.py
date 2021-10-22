@@ -1,5 +1,7 @@
 # utils.py
 
+import torch
+
 is_cuda = torch.cuda.is_available()
 
 def read_vocab(file):
@@ -16,7 +18,7 @@ def read_vocab(file):
     vocab_dict = {}
     for pair in vocabs:
         pair = pair.split(' ') # split by space
-        vocab_dict[pair[0]] : pair[-1]
+        vocab_dict[pair[0]] = pair[-1]
     return vocab_dict
 
 def to_cuda(x):

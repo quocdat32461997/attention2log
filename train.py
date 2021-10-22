@@ -33,9 +33,9 @@ def main(args, configs):
     # initialize model
     model = LogTransformer(num_class=configs['num_class'],
                            vocab_size=train_dataset.get_vocab_size(),
-                           embed_size=configs['embed_size'],
                            hidden_size=configs['hidden_size'],
                            decoder_hidden_size=configs['decoder_hidden_size'],
+                           max_len=configs['max_len'],
                            num_layer=configs['num_layer'],
                            num_head=configs['num_head'],
                            dropout=configs['dropout'])
@@ -55,7 +55,7 @@ def main(args, configs):
             optimizer.zero_grad()
 
             # forward
-            loss = model(inptus, labels)
+            loss = model(inputs, labels)
             batch_loss += loss.item()
 
             # log loss
