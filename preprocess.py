@@ -16,7 +16,7 @@ def transfer(df, event_id_map, freq='1min'):
 
     df['datetime'] = pd.to_datetime(df['Date'] + ' ' + df['Time'])
     df = df[['datetime', 'EventId']]
-    df['EventId'] = df['EventId'].map(lambda e: event_id_map[e] if e in event_id_map else -1)
+    df['EventId'] = df['EventId'].map(lambda e: event_id_map[e] if e in event_id_map else 0)
     deeplog_df = df.set_index('datetime').resample(freq).apply(_custom_resampler).reset_index()
     return deeplog_df
 
@@ -47,6 +47,7 @@ def process_hdfs(args, log_format):
         # get event id map
         df = pd.read_csv(os.path.join(args.output_dir, 'HDFS.log_structured.csv'))
         event_id_map = dict()
+        event_id_map['[UNK]'] = 0  # add unknown log key
         for i, event_id in enumerate(df['EventId'].unique(), 1):
             event_id_map[event_id] = i
 
@@ -56,6 +57,10 @@ def process_hdfs(args, log_format):
                 ds = pd.read_csv(os.path.join(args.output_dir, file))
                 ds = transfer(ds, event_id_map, args.freq)
                 generate(os.path.join(args.output_dir, re.sub('.csv', '.txt', file)), ds)
+
+        # save vocab
+        with open(os.path.join(args.output_dir, 'vocab.txt'), 'w') as file:
+            file.write('\n'.join([str(v) + ' ' + str(k) for k,v in event_id_map.items()]))
     return None
 
 
@@ -77,6 +82,7 @@ def process_openstack(args, log_format):
     # get event id map
     df = pd.read_csv(os.path.join(args.output_dir, 'openstack_normal1.log_structured.csv'))
     event_id_map = dict()
+    event_id_map['[UNK]'] = 0  # add unknown log key
     for i, event_id in enumerate(df['EventId'].unique(), 1):
         event_id_map[event_id] = i
 
@@ -86,6 +92,10 @@ def process_openstack(args, log_format):
             ds = pd.read_csv(os.path.join(args.output_dir, file))
             ds = transfer(ds, event_id_map, args.freq)
             generate(os.path.join(args.output_dir, re.sub('.csv', '.txt', file)), ds)
+
+    # save vocab
+    with open(os.path.join(args.output_dir, 'vocab.txt'), 'w') as file:
+        file.write('\n'.join([str(v) + ' ' + str(k) for k,v in event_id_map.items()]))
     return None
 
 

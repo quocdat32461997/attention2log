@@ -3,15 +3,38 @@
 import os
 import torch
 
+from a2l.utils import read_vocab
 
-class LogDataset(torch.utils.data.Dataset):
+class OpenStackDataset(torch.utils.data.Dataset):
     def __init__(self, data, testing=False):
-        super(LogDataset, self).__init__()
+        super(OpenStackDataset, self).__init__()
+        self.testing=testing
 
         # read data
-        self._read_data(data, testing=testing)
+        self.inputs, self.labels = self._read_data(data, testing=testing)
 
-    def _read_data(self, data, testing=False):
+    def _read_data(self, data):
+        return None
+
+    def __len__(self):
+        return len(self.inputs)
+
+    def __getitem__(self, idx):
+        if self.testing:
+            return self.inputs[idx]
+        else:
+            return self.inputs[idx], self.labels[idx]
+
+class LogDataset(torch.utils.data.Dataset):
+    def __init__(self, data, window_size, vocab):
+        super(LogDataset, self).__init__()
+        self.vocab = read_vocab(vocab)
+        self.window_size = window_size
+
+        # read data
+        self.inputs, self.labels = self._read_data(data)
+
+    def _read_data(self, data):
         # Function to read HFDS data
         # Args:
         #   - data: str
@@ -29,9 +52,9 @@ class LogDataset(torch.utils.data.Dataset):
             for line in file.readlines():
                 num_sessions += 1
                 line = tuple(map(lambda n: n - 1, map(int, line.strip().split())))
-                for i in range(len(line) - window_size):
-                    inputs.append(line[i:i + window_size])
-                    labels.append(line[i + window_size])
+                for i in range(len(line) - self.window_size):
+                    inputs.append(line[i:i + self.window_size])
+                    labels.append(line[i + self.window_size])
 
         # print dataset stats
         self.num_session = num_sessions
@@ -41,12 +64,16 @@ class LogDataset(torch.utils.data.Dataset):
         print('Number of seqs({}): {}'.format(data, self.num_seq))
 
         # convert inputs and labels to tensors
-        self.inputs = torch.tensor(inputs, dtype=torch.float)
-        self.labels = torch.tensor(labels)
+        inputs = torch.tensor(inputs, dtype=torch.float)
+        labels = torch.tensor(labels)
+
+        return inputs, labels
+
+    def get_vocab_size(self):
+        return len(self.vocab)
 
     def __len__(self):
         return len(self.labels)
 
     def __getitem__(self, idx):
-        # group inputs and labels together
         return self.inputs[idx], self.labels[idx]
