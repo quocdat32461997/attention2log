@@ -50,6 +50,8 @@ def process_hdfs(args, log_format):
         event_id_map['[UNK]'] = 0  # add unknown log key
         for i, event_id in enumerate(df['EventId'].unique(), 1):
             event_id_map[event_id] = i
+        event_id_map['[CLS]'] = len(event_id_map) + 1
+        event_id_map['[SEP]'] = len(event_id_map) + 1
 
         # transfer series of logs into intervals of log series
         for file in os.listdir(args.output_dir):
@@ -85,6 +87,8 @@ def process_openstack(args, log_format):
     event_id_map['[UNK]'] = 0  # add unknown log key
     for i, event_id in enumerate(df['EventId'].unique(), 1):
         event_id_map[event_id] = i
+    event_id_map['[CLS]'] = len(event_id_map) + 1
+    event_id_map['[SEP]'] = len(event_id_map) + 1
 
     # transfer series of logs into intervals of log series
     for file in os.listdir(args.output_dir):
@@ -95,7 +99,8 @@ def process_openstack(args, log_format):
 
     # save vocab
     with open(os.path.join(args.output_dir, 'vocab.txt'), 'w') as file:
-        file.write('\n'.join([str(v) + ' ' + str(k) for k,v in event_id_map.items()]))
+        file.write('\n'.join(list(event_id_map.keys())))
+        #file.write('\n'.join([str(v) + ' ' + str(k) for k,v in event_id_map.items()]))
     return None
 
 

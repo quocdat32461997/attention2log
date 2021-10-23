@@ -15,11 +15,7 @@ def read_vocab(file):
 
     # split pair of enumerated_event_id and raw_event_id
     # parse to dict
-    vocab_dict = {}
-    for pair in vocabs:
-        pair = pair.split(' ') # split by space
-        vocab_dict[pair[0]] = pair[-1]
-    return vocab_dict
+    return {k: i for i, k in enumerate(vocabs)}
 
 def to_cuda(x):
     if is_cuda:

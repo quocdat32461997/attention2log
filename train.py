@@ -12,10 +12,15 @@ from a2l.utils import to_cuda
 
 
 def main(args, configs):
+
+    # initialize tokenizer
+    tokenizer = LogTokenizer(vocab=args.vocab)
+
     # initialize datasets and convert to dataloaders
     train_dataset = LogDataset(args.data,
                                window_size=configs['window_size'],
-                               vocab=args.vocab)
+                               max_len=configs['max_len'],
+                               tokenizer=tokenizer)
     train_dataloader = DataLoader(train_dataset,
                                batch_size=configs['batch_size'],
                                shuffle=configs['shuffle'],
@@ -24,15 +29,16 @@ def main(args, configs):
     if args.eval_data:
         eval_dataset = LogDataset(args.eval_data,
                                   window_size=configs['window_size'],
-                                  vocab=args.vocab)
+                                  max_len=configs['max_len'],
+                                  tokenizer=tokenizer)
         eval_dataloader = DataLoader(eval_dataset,
                                   batch_size=configs['batch_size'],
                                   shuffle=configs['shuffle'],
                                   pin_memory=True)
 
     # initialize model
-    model = LogTransformer(num_class=configs['num_class'],
-                           vocab_size=train_dataset.get_vocab_size(),
+    model = LogTransformer(num_class=tokenizer.get_vocab_size(),
+                           vocab_size=tokenizer.get_vocab_size(),
                            hidden_size=configs['hidden_size'],
                            decoder_hidden_size=configs['decoder_hidden_size'],
                            max_len=configs['max_len'],

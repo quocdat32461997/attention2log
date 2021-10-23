@@ -83,8 +83,6 @@ class LogTransformer(torch.nn.Module):
         return F.cross_entropy(outputs, labels)
 
     def _forward(self, inputs):
-        # cast inputs to long
-        inputs = inputs.long()
 
         # embed logs-positions and logs
         pos_features = self.pos_encoder(inputs)
@@ -93,6 +91,10 @@ class LogTransformer(torch.nn.Module):
 
         # encode
         features = self.encoder(features)
+
+        # get features of CLS (at the beginning)
+        features = features[:, 0]
+
         # predict next log entries
         outputs = self.decoder(features)
 
