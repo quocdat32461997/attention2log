@@ -1,5 +1,6 @@
 # berts.py
 
+import math
 import torch
 from torch.nn import functional as F
 
@@ -7,16 +8,15 @@ class PositionEncoding(torch.nn.Module):
     def __init__(self, hidden_size, max_len=5000, name='PositionEncoding'):
         # PositionEncoding from https://github.com/oliverguhr/transformer-time-series-prediction/blob/570d39bc0bbd61c823626ec9ca8bb5696c068187/transformer-singlestep.py#L25
         super(PositionEncoding, self).__init__()
-        pe = torch.zeros(max_len, hidden_size)
+        self.pe = torch.zeros(max_len, hidden_size)
         position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
         div_team = torch.exp(torch.arange(0, hidden_size, 2).float() * (-math.log(10000.0) / hidden_size))
-        pe[:, 0::2] = torch.sin(position * div_team)
-        pe[:, 1::2] = torch.cos(position * div_team)
-        pe = pe.unsqueeze(0).transpose(0, 1)
-        self.register_buffer('pe', pe)
+        self.pe[:, 0::2] = torch.sin(position * div_team)
+        self.pe[:, 1::2] = torch.cos(position * div_team)
+        self.pe = self.pe.unsqueeze(0)
 
     def forward(self, inputs):
-        return inputs + self.pe[:inptus.size(0), :]
+        return self.pe[:, inputs.size(1)]
 
 
 class LogClassifier(torch.nn.Module):
@@ -40,20 +40,24 @@ class LogClassifier(torch.nn.Module):
         self.classifier = torch.nn.ModuleList(self.classifier)
 
     def forward(self, inputs):
-        return self.classifier(inputs)
+        outputs = inputs
+        for layer in self.classifier:
+            outputs = layer(outputs)
+        return outputs
 
 
 class LogTransformer(torch.nn.Module):
     # A Transformer-based encoder for abnormally detection on logs
-    def __init__(self, num_class, vocab_size, embed_size, hidden_size, num_layer, num_head,
-                 dropout, decoder_hidden_size, name='LogTransformer'):
+    def __init__(self, num_class, vocab_size, hidden_size, num_layer, num_head,
+                 dropout, decoder_hidden_size, max_len, name='LogTransformer'):
         super(LogTransformer, self).__init__()
 
         # initialize embedding
-        self.log_embed = torch.nn.Embedding(num_embeddings=vocab_size, embedding_dim=embed_size)
+        self.log_embed = torch.nn.Embedding(num_embeddings=vocab_size,
+                                            embedding_dim=hidden_size)
 
         # initialize encoder
-        self.pos_encoder = PositionEncoding(hidden_size)
+        self.pos_encoder = PositionEncoding(hidden_size, max_len=max_len)
         self.transformer_layer = torch.nn.TransformerEncoderLayer(d_model=hidden_size,
                                                                   nhead=num_head,
                                                                   dropout=dropout)
@@ -79,13 +83,18 @@ class LogTransformer(torch.nn.Module):
         return F.cross_entropy(outputs, labels)
 
     def _forward(self, inputs):
+
         # embed logs-positions and logs
-        pos_features = self.pos_encoder(inputs['pos_inputs'])
-        log_features = self.log_embed(inputs['log_inputs'])
-        features = torch.cat([pos_features, log_features], dim=-1)
+        pos_features = self.pos_encoder(inputs)
+        log_features = self.log_embed(inputs)
+        features = pos_features + log_features
 
         # encode
-        features = self.encoder(features, inputs)
+        features = self.encoder(features)
+
+        # get features of CLS (at the beginning)
+        features = features[:, 0]
+
         # predict next log entries
         outputs = self.decoder(features)
 

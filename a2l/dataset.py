@@ -5,31 +5,29 @@ import torch
 
 from a2l.utils import read_vocab
 
-class OpenStackDataset(torch.utils.data.Dataset):
-    def __init__(self, data, testing=False):
-        super(OpenStackDataset, self).__init__()
-        self.testing=testing
 
-        # read data
-        self.inputs, self.labels = self._read_data(data, testing=testing)
+class LogTokenizer:
+    def __init__(self, vocab):
+        self.vocab = read_vocab(vocab)
+        self.i_vocab = {v: k for k,v in self.vocab.items()}
 
-    def _read_data(self, data):
-        return None
+    def get_vocab_size(self):
+        return len(self.vocab)
 
-    def __len__(self):
-        return len(self.inputs)
+    def decode(self, inputs):
+        if not isinstance(inputs, list):
+            inputs = list(inputs)
+        return [self.i_vocab[x] for x in inputs]
 
-    def __getitem__(self, idx):
-        if self.testing:
-            return self.inputs[idx]
-        else:
-            return self.inputs[idx], self.labels[idx]
+    def __call__(self, log):
+        return [self.vocab['[CLS]']] + list(log) + [self.vocab['[SEP]']]
 
 class LogDataset(torch.utils.data.Dataset):
-    def __init__(self, data, window_size, vocab):
+    def __init__(self, data, window_size, max_len, tokenizer):
         super(LogDataset, self).__init__()
-        self.vocab = read_vocab(vocab)
+        self.tokenizer = tokenizer
         self.window_size = window_size
+        self.max_len = max_len
 
         # read data
         self.inputs, self.labels = self._read_data(data)
@@ -63,17 +61,13 @@ class LogDataset(torch.utils.data.Dataset):
         print('Number of sessions({}): {}'.format(data, self.num_session))
         print('Number of seqs({}): {}'.format(data, self.num_seq))
 
-        # convert inputs and labels to tensors
-        inputs = torch.tensor(inputs, dtype=torch.float)
-        labels = torch.tensor(labels)
-
         return inputs, labels
-
-    def get_vocab_size(self):
-        return len(self.vocab)
 
     def __len__(self):
         return len(self.labels)
 
     def __getitem__(self, idx):
-        return self.inputs[idx], self.labels[idx]
+        # extract inputs and labels
+        inputs = self.tokenizer(self.inputs[idx])
+        labels = self.labels[idx]
+        return torch.tensor(inputs, dtype=torch.long), torch.tensor(labels)

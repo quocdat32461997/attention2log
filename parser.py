@@ -46,9 +46,11 @@ def get_model_args():
     # add arguments
     parser.add_argument('--config',
                         type=str,
+                        required=True,
                         help='Training config file.')
     parser.add_argument('--data',
                         type=str,
+                        required=True,
                         help='Path to training data.')
     parser.add_argument('--eval-data',
                         type=str,
@@ -56,7 +58,7 @@ def get_model_args():
                         help='Path to evaluation data.')
     parser.add_argument('--vocab',
                         type=str,
-                        default=None,
+                        required=True,
                         help='Path to vocab file.')
     # parse args
     args = parser.parse_args()

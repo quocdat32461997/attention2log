@@ -1,16 +1,15 @@
 {
   "window_size": 10,
   "shuffle": false,
-  "iterations": 50,
-  "batch_size": 20,
+  "epochs": 50,
+  "batch_size": 32,
   "lr": 0.01,
   "lr_decay": false,
-  "embed_size": 300,
   "hidden_size": 512,
   "decoder_hidden_size": 128,
+  "max_len": 128,
   "num_layer": 3,
   "num_head": 8,
   "dropout": 0.0,
-  "num_class": 55,
   "saved": "./saved"
 }
