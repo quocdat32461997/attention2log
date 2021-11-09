@@ -10,6 +10,8 @@ from a2l.dataset import *
 from a2l.models import *
 from a2l.utils import to_cuda
 
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
 
 def main(args, configs):
 
@@ -45,6 +47,7 @@ def main(args, configs):
                            num_layer=configs['num_layer'],
                            num_head=configs['num_head'],
                            dropout=configs['dropout'])
+    model = model.to(device)
     print(model)
 
     # optimizer

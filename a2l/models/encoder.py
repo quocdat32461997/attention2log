@@ -3,6 +3,7 @@
 import math
 import torch
 from torch.nn import functional as F
+from utils import to_cuda
 
 class PositionEncoding(torch.nn.Module):
     def __init__(self, hidden_size, max_len=5000, name='PositionEncoding'):
@@ -68,6 +69,7 @@ class LogTransformer(torch.nn.Module):
         self.decoder = LogClassifier(input_hidden_size=hidden_size,
                                     hidden_size=decoder_hidden_size,
                                     num_class=num_class,
+                                    num_layer=2,
                                     dropout=dropout)
 
     def predict(self, inputs):
@@ -87,7 +89,7 @@ class LogTransformer(torch.nn.Module):
         # embed logs-positions and logs
         pos_features = self.pos_encoder(inputs)
         log_features = self.log_embed(inputs)
-        features = pos_features + log_features
+        features = to_cuda(pos_features) + log_features
 
         # encode
         features = self.encoder(features)
