@@ -3,7 +3,7 @@
 import math
 import torch
 from torch.nn import functional as F
-from utils import to_cuda
+from a2l.utils import to_cuda
 
 class PositionEncoding(torch.nn.Module):
     def __init__(self, hidden_size, max_len=5000, name='PositionEncoding'):
