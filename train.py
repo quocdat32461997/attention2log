@@ -4,6 +4,7 @@ import math
 import time
 import torch
 from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
 
 from parser import get_model_args
 from a2l.dataset import *
@@ -55,6 +56,7 @@ def main(args, configs):
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1.0, gamma=0.95)
 
     # training pipeline
+    writer = SummaryWriter(log_dir=configs['saved'])
     for epoch in range(configs['epochs']):
         batch_idx, batch_loss = 0, 0
         start_time = time.time()
@@ -78,6 +80,11 @@ def main(args, configs):
                     epoch, batch_idx, scheduler.get_lr()[0],
                     elapsed * 1000 / log_interval,
                     cur_loss, math.exp(cur_loss)))
+
+                # write logs
+                writer.add_scalar('Loss', cur_loss, epoch)
+                writer.add_scalar('PPL', math.exp(cur_loss), epoch)
+
                 batch_loss = 0
                 start_time = time.time()
 
@@ -87,6 +94,16 @@ def main(args, configs):
 
             batch_idx += 1
 
+        # update lr
+        scheduler.step()
+
+    # stop writing logs
+    writer.flush()
+    writer.close()
+
+    # save model
+    torch.savee(model.state_dict(),
+                 path=os.path.join(configs['saved'], 'model.pt'))
 
 if __name__ == '__main__':
     # get argument arguments

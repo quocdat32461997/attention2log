@@ -110,3 +110,67 @@ class LogTransformer(torch.nn.Module):
         loss = self.compute_loss(outputs, labels)
         
         return loss
+
+
+class LogForecast(torch.nn.Module):
+    # A Transformer-based encoder for abnormally detection on logs
+    def __init__(self, num_class, vocab_size, hidden_size, num_layer, num_head,
+                 dropout, decoder_hidden_size, max_len, name='LogTransformer'):
+        super(LogForecast, self).__init__()
+
+        # initialize embedding
+        self.log_embed = torch.nn.Embedding(num_embeddings=vocab_size,
+                                            embedding_dim=hidden_size)
+
+        # initialize encoder
+        self.pos_encoder = PositionEncoding(hidden_size, max_len=max_len)
+        self.transformer_layer = torch.nn.TransformerEncoderLayer(d_model=hidden_size,
+                                                                  nhead=num_head,
+                                                                  dropout=dropout)
+        self.encoder = torch.nn.TransformerEncoder(self.transformer_layer,
+                                                   num_layers=num_layer)
+
+        # initialize decoder
+        self.decoder = LogClassifier(input_hidden_size=hidden_size,
+                                     hidden_size=decoder_hidden_size,
+                                     num_class=num_class,
+                                     num_layer=2,
+                                     dropout=dropout)
+
+    def predict(self, inputs):
+        # forward
+        outputs = self.forward()
+
+        # softmax
+        outputs = F.softmax(outputs, dim=-1)
+        return outputs
+
+    def compute_loss(self, outputs, labels):
+        # Function to compute loss
+        return F.cross_entropy(outputs, labels)
+
+    def _forward(self, inputs):
+        # embed logs-positions and logs
+        pos_features = self.pos_encoder(inputs)
+        log_features = self.log_embed(inputs)
+        features = to_cuda(pos_features) + log_features
+
+        # encode
+        features = self.encoder(features)
+
+        # get features of CLS (at the beginning)
+        features = features[:, 0]
+
+        # predict next log entries
+        outputs = self.decoder(features)
+
+        return outputs
+
+    def forward(self, inputs, labels):
+        # forward step
+        outputs = self._forward(inputs)
+
+        # compute loss
+        loss = self.compute_loss(outputs, labels)
+
+        return loss
