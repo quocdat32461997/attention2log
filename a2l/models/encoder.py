@@ -3,7 +3,9 @@
 import math
 import torch
 from torch.nn import functional as F
+from torchmetrics import Accuracy, F1, Precision, Recall
 from a2l.utils import to_cuda
+
 
 class PositionEncoding(torch.nn.Module):
     def __init__(self, hidden_size, max_len=5000, name='PositionEncoding'):
@@ -54,6 +56,7 @@ class LogTransformer(torch.nn.Module):
         super(LogTransformer, self).__init__()
 
         # initialize embedding
+        self.num_class = num_class
         self.log_embed = torch.nn.Embedding(num_embeddings=vocab_size,
                                             embedding_dim=hidden_size)
 
@@ -76,9 +79,16 @@ class LogTransformer(torch.nn.Module):
         # forward
         outputs = self.forward()
 
+        # compute loss
+        loss = self.compute_loss(outputs, labels)
+
         # softmax
         outputs = F.softmax(outputs, dim=-1)
-        return outputs
+
+        # compute metrics
+        acc = Accuracy()(outputs, labels)
+        f1 = F1(num_classes=self.num_class)(outputs, labels)
+        return outputs, loss, acc, f1
 
     def compute_loss(self, outputs, labels):
         # Function to compute loss
@@ -108,8 +118,13 @@ class LogTransformer(torch.nn.Module):
 
         # compute loss
         loss = self.compute_loss(outputs, labels)
-        
-        return loss
+
+        # compute metrics
+        outputs = F.softmax(outputs, dim=-1)
+        acc = Accuracy()(outputs, labels)
+        f1 = F1(num_classes=self.num_class)(outputs, labels)
+
+        return loss, acc, f1
 
 
 class LogForecast(torch.nn.Module):

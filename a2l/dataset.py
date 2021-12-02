@@ -22,6 +22,7 @@ class LogTokenizer:
     def __call__(self, log):
         return [self.vocab['[CLS]']] + list(log) + [self.vocab['[SEP]']]
 
+
 class LogDataset(torch.utils.data.Dataset):
     def __init__(self, data, window_size, max_len, tokenizer):
         super(LogDataset, self).__init__()

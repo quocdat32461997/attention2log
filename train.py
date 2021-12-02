@@ -58,7 +58,7 @@ def main(args, configs):
     # training pipeline
     writer = SummaryWriter(log_dir=configs['saved'])
     for epoch in range(configs['epochs']):
-        batch_idx, batch_loss = 0, 0
+        batch_idx, batch_loss, batch_acc, batch_f1 = 0, 0, 0, 0
         start_time = time.time()
 
         for inputs, labels in train_dataloader:
@@ -66,26 +66,31 @@ def main(args, configs):
             optimizer.zero_grad()
 
             # forward
-            loss = model(inputs, labels)
+            loss, acc, f1 = model(inputs, labels)
             batch_loss += loss.item()
+            batch_acc += acc
+            batch_f1 += f1
 
             # log loss
             log_interval = int(train_dataset.__len__() / configs['batch_size'])
             if batch_idx %  log_interval == 0 and batch_idx > 0:
                 cur_loss = batch_loss / log_interval
+                cur_acc = batch_acc / log_interval
+                cur_f1 = batch_f1 / log_interval
                 elapsed = time.time() - start_time
                 print('| epoch {:3d} | {:5d} batches | '
                       'lr {:02.6f} | {:5.2f} ms | '
-                      'loss {:5.5f} | ppl {:8.2f}'.format(
+                      'loss {:5.5f} | acc {:.2f} | f1 {:.2f}'.format(
                     epoch, batch_idx, scheduler.get_lr()[0],
                     elapsed * 1000 / log_interval,
-                    cur_loss, math.exp(cur_loss)))
+                    cur_loss, cur_acc, cur_f1))
 
                 # write logs
                 writer.add_scalar('Loss', cur_loss, epoch)
-                writer.add_scalar('PPL', math.exp(cur_loss), epoch)
+                writer.add_scalar('Acc', cur_acc, epoch)
+                writer.add_scalar('F1', cur_f1, epoch)
 
-                batch_loss = 0
+                batch_loss, batch_acc, batch_f1 = 0, 0, 0
                 start_time = time.time()
 
             # backprop
@@ -102,8 +107,9 @@ def main(args, configs):
     writer.close()
 
     # save model
-    torch.savee(model.state_dict(),
+    torch.save(model.state_dict(),
                  path=os.path.join(configs['saved'], 'model.pt'))
+
 
 if __name__ == '__main__':
     # get argument arguments
