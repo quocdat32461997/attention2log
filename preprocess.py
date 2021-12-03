@@ -16,7 +16,7 @@ def transfer(df, event_id_map, freq='1min'):
 
     df['datetime'] = pd.to_datetime(df['Date'] + ' ' + df['Time'])
     df = df[['datetime', 'EventId']]
-    df['EventId'] = df['EventId'].map(lambda e: event_id_map[e] if e in event_id_map else 0)
+    #df['EventId'] = df['EventId'].map(lambda e: event_id_map[e] if e in event_id_map else 0)
     deeplog_df = df.set_index('datetime').resample(freq).apply(_custom_resampler).reset_index()
     return deeplog_df
 
@@ -86,9 +86,10 @@ def process_openstack(args, log_format):
     event_id_map = dict()
     event_id_map['[UNK]'] = 0  # add unknown log key
     for i, event_id in enumerate(df['EventId'].unique(), 1):
-        event_id_map[event_id] = i
+        event_id_map[str(event_id)] = i
     event_id_map['[CLS]'] = len(event_id_map) + 1
     event_id_map['[SEP]'] = len(event_id_map) + 1
+    event_id_map['[MASK]'] = len(event_id_map) + 1
 
     # transfer series of logs into intervals of log series
     for file in os.listdir(args.output_dir):
@@ -115,7 +116,7 @@ def preproceess(args):
         log_format = '<Logrecord> <Date> <Time> <Pid> <Level> <Component> \[<ADDR>\] <Content>'
         process_openstack(args, log_format)
     else:
-        raise 'Dataset {} is not supproted.'.format(args.input_dir)
+        raise 'Dataset {} is not supported.'.format(args.input_dir)
 
     return None
 

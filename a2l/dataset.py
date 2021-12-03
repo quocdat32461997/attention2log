@@ -19,8 +19,13 @@ class LogTokenizer:
             inputs = list(inputs)
         return [self.i_vocab[x] for x in inputs]
 
+    def encode(self, inputs):
+        if not isinstance(inputs, list):
+            inputs = list(inputs)
+        return [self.vocab[x] for x in inputs]
+
     def __call__(self, log):
-        return [self.vocab['[CLS]']] + list(log) + [self.vocab['[SEP]']]
+        return [self.vocab['[CLS]']] + self.encode(log) + [self.vocab['[SEP]']]
 
 
 class LogDataset(torch.utils.data.Dataset):
@@ -50,7 +55,8 @@ class LogDataset(torch.utils.data.Dataset):
         with open(data, 'r') as file:
             for line in file.readlines():
                 num_sessions += 1
-                line = tuple(map(lambda n: n - 1, map(int, line.strip().split())))
+                line = tuple(map(str, line.strip().split()))
+                #line = tuple(map(lambda n: n - 1, map(str, line.strip().split())))
                 for i in range(len(line) - self.window_size):
                     inputs.append(line[i:i + self.window_size])
                     labels.append(line[i + self.window_size])
@@ -70,5 +76,5 @@ class LogDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         # extract inputs and labels
         inputs = self.tokenizer(self.inputs[idx])
-        labels = self.labels[idx]
-        return torch.tensor(inputs, dtype=torch.long), torch.tensor(labels)
+        label = self.tokenizer.vocab[self.labels[idx]]
+        return torch.tensor(inputs, dtype=torch.long), torch.tensor(label)

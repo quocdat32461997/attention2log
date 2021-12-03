@@ -19,7 +19,7 @@ class PositionEncoding(torch.nn.Module):
         self.pe = self.pe.unsqueeze(0)
 
     def forward(self, inputs):
-        return self.pe[:, inputs.size(1)]
+        return self.pe[:, :inputs.size(1)]
 
 
 class LogClassifier(torch.nn.Module):
@@ -86,8 +86,8 @@ class LogTransformer(torch.nn.Module):
         outputs = F.softmax(outputs, dim=-1)
 
         # compute metrics
-        acc = Accuracy()(outputs, labels)
-        f1 = F1(num_classes=self.num_class)(outputs, labels)
+        acc = to_cuda(Accuracy())(outputs, labels)
+        f1 = to_cuda(F1(num_classes=self.num_class))(outputs, labels)
         return outputs, loss, acc, f1
 
     def compute_loss(self, outputs, labels):
@@ -97,6 +97,7 @@ class LogTransformer(torch.nn.Module):
     def _forward(self, inputs):
 
         # embed logs-positions and logs
+
         pos_features = self.pos_encoder(inputs)
         log_features = self.log_embed(inputs)
         features = to_cuda(pos_features) + log_features
@@ -121,8 +122,8 @@ class LogTransformer(torch.nn.Module):
 
         # compute metrics
         outputs = F.softmax(outputs, dim=-1)
-        acc = Accuracy()(outputs, labels)
-        f1 = F1(num_classes=self.num_class)(outputs, labels)
+        acc = to_cuda(Accuracy())(outputs, labels)
+        f1 = to_cuda(F1(num_classes=self.num_class))(outputs, labels)
 
         return loss, acc, f1
 
