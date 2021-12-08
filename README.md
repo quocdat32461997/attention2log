@@ -19,6 +19,9 @@ python3 preprocess.py --input-dir path/to/data-folder --output-dir path/to/save/
 * **Training**
 ```
 python3 train.py --config configs/transformer_encoder.json --data path/to/processed/data
+
+python3 masked_train.py --config configs/transformer_encoder.json --data path/to/processed/data
+
 ```
 
 ## Dataset
