@@ -7,6 +7,19 @@
 * python>=3.6
 * pytorch==1.4
 * tensorboard==2.0.2
+* torchmetrics
+
+
+## Instructions
+* **Log Parsing**
+```
+python3 preprocess.py --input-dir path/to/data-folder --output-dir path/to/save/data
+``` 
+
+* **Training**
+```
+python3 train.py --config configs/transformer_encoder.json --data path/to/processed/data
+```
 
 ## Dataset
 ~~The dataset can be downloaded [HERE](https://www.cs.utah.edu/~mind/papers/deeplog_misc.html).~~ The website can't accessed now, but you can find the HDFS data in this repository.
@@ -20,8 +33,3 @@ Run the following code in terminal, then navigate to https://localhost:6006.
 
 ## Reference
 Min Du, Feifei Li, Guineng Zheng, Vivek Srikumar. "Deeplog: Anomaly detection and diagnosis from system logs through deep learning." ACM SIGSAC Conference on Computer and Communications Security(CCS), 2017.
-
-## Contributing
-**If you have any questions, please open an** ***[issue](https://github.com/wuyifan18/DeepLog/issues).***
-
-**Welcome to** ***[pull requests](https://github.com/wuyifan18/DeepLog/pulls)*** **to implement the rest of this paper!**

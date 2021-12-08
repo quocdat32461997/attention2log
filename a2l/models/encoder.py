@@ -72,7 +72,7 @@ class LogTransformer(torch.nn.Module):
         self.decoder = LogClassifier(input_hidden_size=hidden_size,
                                     hidden_size=decoder_hidden_size,
                                     num_class=num_class,
-                                    num_layer=2,
+                                    num_layer=1,
                                     dropout=dropout)
 
     def predict(self, inputs):
