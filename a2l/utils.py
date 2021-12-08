@@ -4,6 +4,7 @@ import torch
 
 is_cuda = torch.cuda.is_available()
 
+
 def read_vocab(file):
     # Function to read a text file of log keys and returns a dict
     # Args:
@@ -17,7 +18,8 @@ def read_vocab(file):
     # parse to dict
     return {k: i for i, k in enumerate(vocabs)}
 
+
 def to_cuda(x):
     if is_cuda:
-        x = x.cua(0)
+        x = x.cuda(0)
     return x

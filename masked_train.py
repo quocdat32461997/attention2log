@@ -18,7 +18,7 @@ def main(args, configs):
     tokenizer = LogTokenizer(vocab=args.vocab)
 
     # initialize datasets and convert to dataloaders
-    train_dataset = LogDataset(args.data,
+    train_dataset = MaskedLogDataset(args.data,
                                window_size=configs['window_size'],
                                max_len=configs['max_len'],
                                tokenizer=tokenizer)
@@ -38,7 +38,7 @@ def main(args, configs):
                                   pin_memory=True)
 
     # initialize model
-    model = LogTransformer(num_class=tokenizer.get_vocab_size(),
+    model = MaskedLogTransformer(num_class=tokenizer.get_vocab_size(),
                            vocab_size=tokenizer.get_vocab_size(),
                            hidden_size=configs['hidden_size'],
                            decoder_hidden_size=configs['decoder_hidden_size'],

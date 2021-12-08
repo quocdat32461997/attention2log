@@ -140,3 +140,5 @@ cython_debug/
 **/*.swp
 **/.idea
 **/data
+**/*.zip
+**/Dat_project_code
